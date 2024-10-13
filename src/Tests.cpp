@@ -8253,6 +8253,68 @@ static void TestMappingHysteresis()
     }
 }
 
+
+static void TestWin32Handles()
+{
+#if VMA_EXTERNAL_MEMORY_WIN32
+    wprintf(L"Test Win32 handles\n");
+    constexpr static VkExportMemoryAllocateInfoKHR exportMemAllocInfo{
+        VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO_KHR,
+        nullptr,
+        VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT
+    };
+    constexpr static VkExternalMemoryBufferCreateInfoKHR externalMemBufCreateInfo{
+        VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO_KHR,
+        nullptr,
+        VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT
+    };
+
+    VkBufferCreateInfo bufCreateInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+    bufCreateInfo.size = 0x10000;
+    bufCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    bufCreateInfo.pNext = &externalMemBufCreateInfo;
+
+    VmaAllocationCreateInfo allocCreateInfo = {};
+    allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO;
+
+    uint32_t memTypeIndex = UINT32_MAX;
+    TEST(vmaFindMemoryTypeIndexForBufferInfo(g_hAllocator,
+        &bufCreateInfo, &allocCreateInfo, &memTypeIndex) == VK_SUCCESS);
+
+    VmaPoolCreateInfo poolCreateInfo = {};
+    poolCreateInfo.memoryTypeIndex = memTypeIndex;
+    poolCreateInfo.pMemoryAllocateNext = (void*)&exportMemAllocInfo;
+
+    VmaPool pool = VK_NULL_HANDLE;
+    TEST(vmaCreatePool(g_hAllocator, &poolCreateInfo, &pool) == VK_SUCCESS);
+
+    allocCreateInfo.pool = pool;
+
+    for (size_t test = 0; test < 2; ++test)
+    {
+        if (test == 1)
+            allocCreateInfo.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT;
+
+        VkBuffer buf = VK_NULL_HANDLE;
+        VmaAllocation alloc = VK_NULL_HANDLE;
+        TEST(vmaCreateBuffer(g_hAllocator, &bufCreateInfo, &allocCreateInfo, &buf, &alloc, nullptr) == VK_SUCCESS);
+        HANDLE handle = NULL;
+        HANDLE handle2 = NULL;
+        TEST(vmaGetMemoryWin32Handle(g_hAllocator, alloc, nullptr, &handle) == VK_SUCCESS);
+        TEST(handle != nullptr);
+        TEST(vmaGetMemoryWin32Handle(g_hAllocator, alloc, nullptr, &handle2) == VK_SUCCESS);
+        TEST(handle2 != nullptr);
+        TEST(handle2 != handle);
+
+        vmaDestroyBuffer(g_hAllocator, buf, alloc);
+        TEST(CloseHandle(handle));
+        TEST(CloseHandle(handle2));
+    }
+
+    vmaDestroyPool(g_hAllocator, pool);
+#endif
+}
+
 void Test()
 {
     wprintf(L"TESTING:\n");
@@ -8295,6 +8357,7 @@ void Test()
     TestMappingHysteresis();
     TestDeviceLocalMapped();
     TestMaintenance5();
+    TestWin32Handles();
     TestMappingMultithreaded();
     TestLinearAllocator();
     ManuallyTestLinearAllocator();

@@ -58,6 +58,7 @@ Additional features:
    - VK_KHR_buffer_device_address: Flag `VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT_KHR` is automatically added to memory allocations where needed.
    - VK_EXT_memory_priority: Set `priority` of allocations or custom pools and it will be set automatically using this extension.
    - VK_AMD_device_coherent_memory.
+   - VK_KHR_external_memory_win32.
 - Defragmentation of GPU and CPU memory: Let the library move data around to free some memory blocks and make your allocations better compacted.
 - Statistics: Obtain brief or detailed statistics about the amount of memory used, unused, number of allocated blocks, number of allocations etc. - globally, per memory heap, and per memory type.
 - Debug annotations: Associate custom `void* pUserData` and debug `char* pName` with each allocation.
@@ -155,6 +156,7 @@ See **[Documentation](https://gpuopen-librariesandsdks.github.io/VulkanMemoryAll
 # Software using this library
 
 - **[Blender](https://www.blender.org)**
+- **[Qt Project](https://github.com/qt)**
 - **[Baldur's Gate III](https://www.mobygames.com/game/150689/baldurs-gate-iii/credits/windows/?autoplatform=true)**
 - **[Cyberpunk 2077](https://www.mobygames.com/game/128136/cyberpunk-2077/credits/windows/?autoplatform=true)**
 - **[X-Plane](https://x-plane.com/)**
